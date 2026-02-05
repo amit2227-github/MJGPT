@@ -1,4 +1,4 @@
-import { Children, createContext, useContext, useEffect, useState } from "react";
+import { children, createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import{dummyChats, dummyUserData} from "../assets/assets";
 

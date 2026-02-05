@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useAppContext } from '../context/AppContext'
-import assets from '../assets/assets' // ✅ adjust path if needed
+import {assets} from '../assets/assets' 
 
 const Sidebar = () => {
 
