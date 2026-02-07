@@ -4,6 +4,7 @@ import { Route, Routes } from 'react-router-dom'
 import ChatBox from './components/ChatBox'
 import Community from './pages/Community'
 import Credits from './pages/Credits'
+import './assets/prism.css'
 
 const App = () => {
   const [isMenuOpen , setIsMenuOpen] = useState(false)
