@@ -59,6 +59,14 @@ const ChatBox = () => {
           }
       </div>
 
+      {mode === 'image' && (
+        <label className='inline-flex items-center gap-2 mg-3 text-sm mx-auto'>
+          <p className='text-xs mb-2'>Publish Generated Image to Community</p>
+          <input type="checkbox" className='cursor-pointer mb-2' checked={isPublished}
+          onChange={(e) => setIsPublished(e.target.checked)}/>
+        </label>
+      )}
+
       {/* {Prompt Input Box} */}
 
           <form  onSubmit={onSubmit}
