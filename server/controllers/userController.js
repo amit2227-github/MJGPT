@@ -1,63 +1,85 @@
 import User from "../models/User.js";
-import jwt from 'jsonwebtoken'
+import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
+// Generate JWT
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: "30d",
+  });
+};
 
-//Generate JWT
-const geberateToken = (id) => {
-    return jwt.sign({id},process.env.JWT_SECRET,{
-        expiresIn: '30d'
-    })
-}
+// Register User
+export const registerUser = async (req, res) => {
+  const { name, email, password } = req.body;
 
-//API to Register user
-export const registerUser = async(req,res) => {
-    const{name, email, password} = req.body;
-
-    try{
-        const userExists = await User.findOne({email})
-
-        if(userExists){
-            return res.json({success:false,message:"User is already exists"})
-        }
-
-        const user = await User.create({name, email,password}) 
-        const token = geberateToken(user._id)
-        res.json({success:true,token})
-
-    }catch(error){
-        return res.json({success:false, message:error,message})
-
+  try {
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({
+        success: false,
+        message: "User already exists",
+      });
     }
-}
 
-//API to Login User
-export const loginUser = async(req,res) => {
-        const {email,password} =req.body;
-        try{
-            const user=await User.findOne({email})
-            if(user){
-                const isMatch = await bcrypt.compare(password,user.password)
+    const user = await User.create({
+      name,
+      email: email.toLowerCase(),
+      password, // ✅ NO hashedPassword here
+    });
 
-                if(isMatch){
-                    const token = generateToken(user._id);
-                    return res.json({success:true, token})
-                }
-            }
-            return res.json({success:false,message:"Invalid email or password"})
-        }catch(error){
-            return res.json({success:false, message:error.message})
-        }
-}
+    const token = generateToken(user._id);
 
+    res.status(201).json({
+      success: true,
+      token,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
-//API to get user data
-export const getUser = async(req,res) => {
+// Login User
+export const loginUser = async (req, res) => {
+  const { email, password } = req.body;
 
-    try{
-        const user = req.user;
-        return res.json({success: true, user})
-    }catch(error){
-        return res.json({success:false, message:error.message})
+  try {
+    const user = await User.findOne({ email });
+
+    if (user && (await bcrypt.compare(password, user.password))) {
+      const token = generateToken(user._id);
+      return res.json({
+        success: true,
+        token,
+      });
     }
-}
+ 
+    res.status(401).json({
+      success: false,
+      message: "Invalid email or password",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+ 
+// Get User
+export const getUser = async (req, res) => {
+  try {
+    res.json({
+      success: true,
+      user: req.user,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
