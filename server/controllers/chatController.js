@@ -3,11 +3,9 @@
 //Api controller for creating a new chat 
 
 import Chat from "../models/Chat.js"
-
 export const createChat =  async(req,res) =>  {
     try{
-        const userId = req.user;
-
+        const userId = req.user._id;
         const chatData = {
             userId,
             messages:[],
@@ -23,10 +21,11 @@ export const createChat =  async(req,res) =>  {
 }
 
 //API controller for getting all chats
-
 export const getChats =  async(req,res) =>  {
     try{
-        const userId = req.user;
+        const userId = req.user._id;
+        console.log("req.user:", req.user);
+        console.log("userId:", req.user._id);
         const  chats = await Chat.find({userId}).sort({updatedAt : -1})
         res.json({success:true,chats})
     }catch(error){
@@ -35,10 +34,9 @@ export const getChats =  async(req,res) =>  {
 }
 
 //API controller for deleting a chat
-
 export const deleteChat =  async(req,res) =>  {
     try{
-        const userId = req.user_.id
+        const userId = req.user._id
         const {chatId} = req.body
 
         await Chat.deleteOne({_id:chatId, userId})

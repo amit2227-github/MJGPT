@@ -1,46 +1,66 @@
-
-
 //Text-base AI chat Message Controller
 import axios from "axios"
 import User from "../models/User.js";
 import Chat from "../models/Chat.js";
 import imagekit from "../configs/imageKit.js";
+import openai from "../configs/openai.js";
 
 
-export const textMessageController = async (req,res) => {
-        try{
-            const userId = req.user;
-
-            if(req.user.credits < 2){
-                return   res.json({success:false, message:"you don't have enough credits to use this feature"})
-            }
-
-            const {chatId, prompt} = req.body
-
-            const chat = await Chat.findOne({userId, _id: chatId})
-            chat.messages.push({role:"user",content: prompt, timestamp: Date.now(),isImage: false})
-
-            const {choices} = await openai.chat.completions.create({
-                    model: "gemini-3-flash-preview",
-                    messages: [
-                        {
-                            role: "user",
-                            content:prompt,
-                        },
-                    ],
-                });
-            
-                const reply = {...choices[0].messages,timestamp: Date.now(),isImage: false}
-                res.json({success: true, reply})
-                chat.messages.push(reply)
-                await chat.save()
-                await User.updateOne({_id: userId}, {$inc: {credits: -1}})
-
-        }catch(error){
-            res.json({success: false, message: error.message})
+export const textMessageController = async (req, res) => {
+    try {
+      const userId = req.user._id || req.user;
+        if (req.user.credits < 2) {
+            return res.json({
+                success: false,
+                message: "You don't have enough credits"
+            });
         }
-}
 
+        const { chatId, prompt } = req.body;
+        const chat = await Chat.findOne({ userId, _id: chatId });
+
+        if (!chat) {
+            return res.json({
+                success: false,
+                message: "Chat not found"
+            });
+        }
+
+        chat.messages.push({
+            role: "user",
+            content: prompt,
+            timestamp: Date.now(),
+            isImage: false
+        });
+
+        const response = await openai.chat.completions.create({
+    model: "gemini-2.0-flash",   // ✅ This
+    messages: [
+        { role: "user", content: prompt }
+    ]
+});
+        const reply = {
+            role: "assistant",
+            content: response.choices[0].message.content,
+            timestamp: Date.now(),
+            isImage: false
+        };
+
+        chat.messages.push(reply);
+
+        await chat.save();
+
+        await User.updateOne(
+            { _id: userId },
+            { $inc: { credits: -1 } }
+        );
+
+        res.json({ success: true, reply });
+
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};
 //Image Generation Message Controller
 
 export const imageMessagesController = async (req,res) =>{
