@@ -51,11 +51,11 @@ export const purchasePlanController = async (req, res) => {
                 success: false,
                 message: "Invalid plan selected"
             });
-        } catch (error) {
+        }
+     } catch (error) {
             res.json({
                 success: false,
                 message: error.message
             });
         }
-    }
 }
