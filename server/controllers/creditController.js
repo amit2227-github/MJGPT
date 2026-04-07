@@ -1,4 +1,5 @@
-import Transcation from "../models/Transcation";
+import Transcation from "../models/Transcation.js";
+import Strip from 'stripe';
 
 const plans =[
     {
@@ -26,7 +27,7 @@ const plans =[
 
 
 //Api controller for getting all plans
-export const getPlansController = async (req, res) => {
+export const getPlans = async (req, res) => {
     try {
         res.json({
             success: true,
@@ -40,8 +41,12 @@ export const getPlansController = async (req, res) => {
     }
 }
 
+const stripe = new Strip(process.env.STRIPE_SECRET_KEY);
+
+
+
 //Api controller for purchasing a plan
-export const purchasePlanController = async (req, res) => {
+export const purchasePlan = async (req, res) => {
     try {
         const userId = req.user._id || req.user;
         const { planId } = req.body;
@@ -52,6 +57,42 @@ export const purchasePlanController = async (req, res) => {
                 message: "Invalid plan selected"
             });
         }
+        
+        //Create new transcation
+        const transcation = await Transcation.create({
+            userId:userId,
+            planId: plan._id,
+            amount: plan.price,
+            credits: plan.credits,
+            isPaid: false
+        });
+
+        const {origin} = req.headers;
+        const session = await stripe.checkout.sessions.create({
+            line_items:[
+                {
+                    price_data:{
+                        currency: 'usd',
+                        unit_amount: plan.price * 100,
+                        product_data: {
+                            name: plan.name
+                        }
+                    },
+                    quantity: 1,
+                },
+            ],
+            mode: 'payment',
+            success_url:`${origin}/loading`,
+            cancel_url:`${origin}`,
+            metadata:{transcationId: transcation._id.toString(),appId:"mjgpt"},
+            expires_at:Math.floor(Date.now() / 1000) + 15 * 60, 
+        });
+
+        res.json({
+            success: true,
+            url: session.url
+        });
+
      } catch (error) {
             res.json({
                 success: false,
