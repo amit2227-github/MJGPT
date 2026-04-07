@@ -85,7 +85,7 @@ export const purchasePlan = async (req, res) => {
             success_url:`${origin}/loading`,
             cancel_url:`${origin}`,
             metadata:{transcationId: transcation._id.toString(),appId:"mjgpt"},
-            expires_at:Math.floor(Date.now() / 1000) + 15 * 60, 
+            expires_at:Math.floor(Date.now() / 1000) + 30 * 60, 
         });
 
         res.json({
