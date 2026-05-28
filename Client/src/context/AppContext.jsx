@@ -36,7 +36,7 @@ export const AppContextProvider = ({children}) =>{
     const createNewChat = async() => {
         try{
             if(!user) return toast('Login to create a new chat')
-            await axios.get('/api/chat/create',{headers:{Authorization:token}})
+            await axios.post('/api/chat/create',{},{headers:{Authorization:token}})
             await fetchUserChats()
         }catch(err){
             toast.error(err.message);
@@ -51,7 +51,7 @@ export const AppContextProvider = ({children}) =>{
                 if(data.chats.length === 0){
                     if (isRetry === true) return; // Prevent infinite loop if chat creation fails
                     try {
-                        await axios.get('/api/chat/create',{headers:{Authorization:token}});
+                        await axios.post('/api/chat/create',{},{headers:{Authorization:token}});
                         return fetchUserChats(true);
                     } catch (err) {
                         toast.error("Failed to initialize chat");

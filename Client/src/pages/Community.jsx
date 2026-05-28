@@ -1,15 +1,29 @@
 import React, { useEffect, useState } from 'react'
 import Loading from './Loading' 
 import {dummyPublishedImages} from '../assets/assets'
+import { useAppContext } from '../context/AppContext'
+import toast from 'react-hot-toast'
 
 const Community = () => {
 
     const [images, setImages] = useState([])
     const [loading, setLoading] = useState(true)
+    const { axios } = useAppContext()
 
     const fetchImages = async() => {
-      setImages(dummyPublishedImages)
-      setLoading(false)
+      try {
+        const { data } = await axios.get('/api/user/published-images')
+        if (data.success) {
+          setImages(data.images && data.images.length > 0 ? data.images : dummyPublishedImages)
+        } else {
+          setImages(dummyPublishedImages)
+        }
+      } catch (err) {
+        toast.error('Failed to load live community images, using offline fallback')
+        setImages(dummyPublishedImages)
+      } finally {
+        setLoading(false)
+      }
     }
 
     useEffect(() => {

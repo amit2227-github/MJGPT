@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 import {assets} from '../assets/assets' 
 import moment from 'moment'
+import toast from 'react-hot-toast'
 
 const Sidebar = ({isMenuOpen,setIsMenuOpen}) => {
 
@@ -11,8 +12,42 @@ const Sidebar = ({isMenuOpen,setIsMenuOpen}) => {
     theme = 'dark',
     setTheme,
     user,
-    navigate
-  } = useAppContext()
+    navigate,
+    createNewChat,
+    axios, setChats, fetchUserChats,setToken,token
+  } = useAppContext('')
+
+  const logout = () => {
+    localStorage.removeItem('token')
+    setToken(null)
+    toast.success('Logged out successfully')  
+  }
+
+  const deleteChat = async (e, chatId) => {
+    try {
+      e.stopPropagation()
+      const confirm = window.confirm('Are you sure you want to delete this chat?')
+
+      if(!confirm) return
+      const {data} = await axios.post('/api/chat/delete', {chatId}, {headers: {Authorization: token}})
+      if(data.success){
+        const updatedChats = chats.filter(chat => chat._id !== chatId)
+        setChats(updatedChats)
+        setSelectedChat(prevSelected => {
+          if (prevSelected?._id === chatId) {
+            return updatedChats.length > 0 ? updatedChats[0] : null
+          }
+          return prevSelected
+        })
+        await fetchUserChats()
+        toast.success(data.message)
+      } else {
+        toast.error(data.message)
+      }
+    } catch (error) {
+      toast.error(error.message)
+    }
+  }
 
   const [search, setSearch] = useState('')
 
@@ -35,8 +70,8 @@ const Sidebar = ({isMenuOpen,setIsMenuOpen}) => {
           <p className='ml-4'>Intelligent AI Assistant</p>
         </div>
       </div>
-      
-      <button className='flex justify-center items-center w-full py-2 mt-5 text-white bg-gradient-to-r from-[#A456F7] to-[#3D81F6] text-sm rounded-md cursor-pointer'>
+      {/* {New Chat Button} */}
+      <button onClick={createNewChat} className='flex justify-center items-center w-full py-2 mt-5 text-white bg-gradient-to-r from-[#A456F7] to-[#3D81F6] text-sm rounded-md cursor-pointer'>
         <span className='mr-2 text-xl'>+</span>
         New Chat
       </button>
@@ -92,7 +127,7 @@ const Sidebar = ({isMenuOpen,setIsMenuOpen}) => {
             <img
               src={assets.bin_icon}
               className="hidden group-hover:block w-4 cursor-pointer not-dark:invert"
-              alt=""
+              alt="" onClick={(e) => deleteChat(e, chat._id)}
             />
           </div>
         ))}
@@ -148,7 +183,7 @@ const Sidebar = ({isMenuOpen,setIsMenuOpen}) => {
          dark:border-white/15 rounded-md cursor-pointer group">
           <img src={assets.user_icon} className='w-7 rounded-full' alt="" />
                 <p className='flex-1 text-sm dark:text-primary truncate'>{user ? user.name : 'Login your account'}</p> 
-                {user &&  <img src={assets.logout_icon} className='h-5 cursor-pointer hidden not-dark:invert group-hover:block'/> }
+                {user &&  <img onClick={logout} src={assets.logout_icon} className='h-5 cursor-pointer hidden not-dark:invert group-hover:block'/> }
         </div>
         
         <img onClick={() => setIsMenuOpen(false)} src={assets.close_icon} alt="" className='absolute top-3 right-3 w-5 h-5

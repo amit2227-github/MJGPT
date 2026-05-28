@@ -51,7 +51,7 @@ const Login = () => {
                   </p>
               ) : (
                   <p>
-                      Create an account? <span onClick={() => setState("register")} className="text-purple-700cursor-pointer">click here</span>
+                      Create an account? <span onClick={() => setState("register")} className="text-purple-700 cursor-pointer">click here</span>
                   </p>
               )}
               <button type='submit' className="bg-purple-700 hover:bg-purple-800 transition-all text-white w-full py-2 rounded-md cursor-pointer">

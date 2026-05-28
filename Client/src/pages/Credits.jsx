@@ -1,14 +1,48 @@
 import React, { useEffect, useState } from 'react'
 import { dummyPlans } from '../assets/assets'
 import Loading from './Loading'
+import { useAppContext } from '../context/AppContext'
+import toast from 'react-hot-toast'
 
 const Credits = () => {
   const [plans, setPlans] = useState([])
   const [loading, setLoading] = useState(true)
+  const { axios, token } = useAppContext()
+
+  const fetchPlans = async () => {
+    try {
+      const { data } = await axios.get('/api/credit/plan')
+      if (data.success) {
+        setPlans(data.plans && data.plans.length > 0 ? data.plans : dummyPlans)
+      } else {
+        setPlans(dummyPlans)
+      }
+    } catch (err) {
+      toast.error('Failed to load live credit plans, using offline fallback')
+      setPlans(dummyPlans)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const buyPlan = async (planId) => {
+    try {
+      const { data } = await axios.post('/api/credit/purchase', { planId }, {
+        headers: { Authorization: token }
+      })
+      if (data.success && data.url) {
+        toast.loading('Redirecting to payment gateway...')
+        window.location.href = data.url
+      } else {
+        toast.error(data.message || 'Payment initiation failed')
+      }
+    } catch (err) {
+      toast.error(err.message)
+    }
+  }
 
   useEffect(() => {
-    setPlans(dummyPlans)
-    setLoading(false)
+    fetchPlans()
   }, [])
 
   if (loading) return <Loading />
@@ -45,8 +79,13 @@ const Credits = () => {
                 ))}
               </ul>
             </div>
-            <button className='mt-6 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 
-            text-white font-medium py-2 rounded transition-colors cursor-pointer'>Buy now</button>
+            <button 
+              onClick={() => buyPlan(plan._id)}
+              className='mt-6 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 
+              text-white font-medium py-2 rounded transition-colors cursor-pointer'
+            >
+              Buy now
+            </button>
           </div>
         ))}
       </div>

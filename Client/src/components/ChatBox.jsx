@@ -2,20 +2,93 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 import { assets } from '../assets/assets'
 import Message from './Message'
+import toast from 'react-hot-toast'
 
 const ChatBox = () => {
 
   const containerRef = useRef(null)
 
-  const { selectedChat, theme  } = useAppContext()
+  const { selectedChat, setSelectedChat, theme, token, axios, user, setUser, chats, setChats } = useAppContext()
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(false)
   const[prompt,setPrompt] = useState('')
   const[mode,setMode] = useState('text')
   const[isPublished,setIsPublished] = useState(false)
 
-  const onSubmit =  async (e) => {
-      e.preventDefault()
+  const onSubmit = async (e) => {
+    e.preventDefault()
+    if (!prompt.trim()) return
+
+    if (!selectedChat) {
+      toast.error('No active chat session. Please create or select a chat first.')
+      return
+    }
+
+    const requiredCredits = mode === 'image' ? 2 : 1
+    if (!user || Number(user.credits) < requiredCredits) {
+      toast.error(`Not enough credits. You need at least ${requiredCredits} credits.`)
+      return
+    }
+
+    setLoading(true)
+
+    const userMsg = {
+      role: 'user',
+      content: prompt,
+      timestamp: Date.now(),
+      isImage: false
+    }
+
+    const currentMessages = [...messages, userMsg]
+    setMessages(currentMessages)
+    setPrompt('')
+
+    try {
+      const endpoint = mode === 'image' ? '/api/message/image' : '/api/message/text'
+      const payload = mode === 'image' 
+        ? { chatId: selectedChat._id, prompt, isPublished }
+        : { chatId: selectedChat._id, prompt }
+
+      const { data } = await axios.post(endpoint, payload, {
+        headers: { Authorization: token }
+      })
+
+      if (data.success) {
+        const replyMsg = data.reply
+        const updatedMessages = [...currentMessages, replyMsg]
+        setMessages(updatedMessages)
+
+        const updatedSelectedChat = { ...selectedChat, messages: updatedMessages }
+        setSelectedChat(updatedSelectedChat)
+
+        const updatedChats = chats.map(chat => {
+          if (chat._id === selectedChat._id) {
+            return updatedSelectedChat
+          }
+          return chat
+        })
+        setChats(updatedChats)
+
+        setUser(prevUser => {
+          if (prevUser) {
+            return {
+              ...prevUser,
+              credits: Number(prevUser.credits) - requiredCredits
+            }
+          }
+          return prevUser
+        })
+
+      } else {
+        toast.error(data.message)
+        setMessages(selectedChat.messages || [])
+      }
+    } catch (err) {
+      toast.error(err.message)
+      setMessages(selectedChat.messages || [])
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
