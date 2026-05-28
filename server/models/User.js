@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema({
         type:String, required:true
     },
     credits:{
-        type:String, default: 20
+        type:Number, default: 20
     },
 })
 

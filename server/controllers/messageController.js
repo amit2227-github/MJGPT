@@ -9,7 +9,7 @@ import openai from "../configs/openai.js";
 export const textMessageController = async (req, res) => {
     try {
       const userId = req.user._id || req.user;
-        if (req.user.credits < 2) {
+        if (req.user.credits < 1) {
             return res.json({
                 success: false,
                 message: "You don't have enough credits"
@@ -34,7 +34,7 @@ export const textMessageController = async (req, res) => {
         });
 
         const response = await openai.chat.completions.create({
-    model: "gemini-2.0-flash",   // ✅ This
+    model: "gemini-2.5-flash",   // ✅ Updated to active 2.5 flash model
     messages: [
         { role: "user", content: prompt }
     ]
@@ -83,8 +83,7 @@ export const imageMessagesController = async (req,res) =>{
         const encodedPrompt = encodeURIComponent(prompt)
 
         //construct ImageKit AI generation URL
-        const generationImageUrl =  `${process.env.IMAGEKIT_URL_ENDPOINT}/ik-genimg-prompt-
-        ${encodedPrompt}/mjgpt/${Date.now()}.png?tr=w-800,h-800`;
+        const generationImageUrl = `${process.env.IMAGEKIT_URL_ENDPOINT}/ik-genimg-prompt-${encodedPrompt}/mjgpt/${Date.now()}.png?tr=w-800,h-800`;
 
 
         //Trigger generation by fetching from ImageKit

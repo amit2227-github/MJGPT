@@ -48,7 +48,7 @@ export const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: email ? email.toLowerCase() : "" });
 
     if (user && (await bcrypt.compare(password, user.password))) {
       const token = generateToken(user._id);
@@ -88,10 +88,10 @@ export const getUser = async (req, res) => {
 // API to get publishedImages
 export const getPublishedImages = async (req, res) => {
   try {
-    const publishedImagesMessages =await Chat.aggragate ([
+    const publishedImagesMessages = await Chat.aggregate ([
       {$unwind: "$messages"},
-      {$match: {"messages.isImage": true, "messages.published": true}},
-      {$project: { _id: 0, imageUrl: "$messages.content", userName: "$userId" }}
+      {$match: {"messages.isImage": true, "messages.isPublished": true}},
+      {$project: { _id: 0, imageUrl: "$messages.content", userName: "$userName" }}
     ]);
     res.json({
       success: true,
